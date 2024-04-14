@@ -1,0 +1,17 @@
+.:53 {
+    metadata
+    prometheus 0.0.0.0:9153
+
+    bind 0.0.0.0
+
+    stats postgresql://user:pass@postgres.postgres.svc.cluster.local:5432 {
+        workers 3
+        queryTimeout 1m
+    }
+
+    forward . tls://1.1.1.1 tls://1.0.0.1 {
+        tls_servername cloudflare-dns.com
+    }
+    log
+    errors
+}

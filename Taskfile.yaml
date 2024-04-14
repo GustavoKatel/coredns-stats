@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  test:
+    cmds:
+      - go test -race -v ./...
+
+  mockery-install:
+    status:
+      - mockery -version
+    cmds:
+      - go install github.com/vektra/mockery/v2@v2.42.1
+
+  mockery:
+    deps:
+      - mockery-install
+    cmds:
+      - mockery

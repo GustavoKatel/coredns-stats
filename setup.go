@@ -33,7 +33,7 @@ func setup(c *caddy.Controller) error {
 	backendURI := args[0]
 
 	workers := int64(3)
-	queryTimeout := 1 * time.Minute
+	queryTimeout := 5 * time.Second
 	statsPrefix := "coredns"
 
 	for c.NextBlock() {

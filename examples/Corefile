@@ -4,9 +4,10 @@
 
     bind 0.0.0.0
 
-    stats postgresql://user:pass@postgres.postgres.svc.cluster.local:5432 {
+    stats postgresql://user:pass@postgres.postgres.svc.cluster.local:5432/coredns {
         workers 3
-        queryTimeout 1m
+        queryTimeout 5s
+        statsPrefix coredns
     }
 
     forward . tls://1.1.1.1 tls://1.0.0.1 {

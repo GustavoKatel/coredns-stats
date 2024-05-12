@@ -35,6 +35,7 @@ func setup(c *caddy.Controller) error {
 	workers := int64(3)
 	queryTimeout := 5 * time.Second
 	statsPrefix := "coredns"
+	maxEntryAge := 30 * 24 * time.Hour
 
 	for c.NextBlock() {
 		switch c.Val() {
@@ -64,6 +65,16 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error(PluginName, c.Errf("statsPrefix must be a string"))
 			}
 			statsPrefix = t[0]
+		case "maxEntryAge":
+			t := c.RemainingArgs()
+			if len(t) != 1 {
+				return plugin.Error(PluginName, c.Errf("maxEntryAge must be a duration"))
+			}
+			var err error
+			maxEntryAge, err = time.ParseDuration(t[0])
+			if err != nil {
+				return plugin.Error(PluginName, c.Errf("maxEntryAge must be a duration: %s", err.Error()))
+			}
 
 		default:
 			return plugin.Error(PluginName, c.Errf("unknown property '%s'", c.Val()))
@@ -72,7 +83,7 @@ func setup(c *caddy.Controller) error {
 
 	logger := clog.NewWithPlugin(PluginName)
 
-	backend, err := PrepareStatsBackend(backendURI, workers, queryTimeout, statsPrefix, logger)
+	backend, err := PrepareStatsBackend(backendURI, workers, queryTimeout, statsPrefix, maxEntryAge, logger)
 	if err != nil {
 		return plugin.Error(PluginName, err)
 	}

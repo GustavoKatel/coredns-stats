@@ -8,13 +8,14 @@ import (
 
 type StatsBackend interface {
 	Start() error
+	Ready() bool
 	Store(domain string, questionType string, metadata Metadata)
 	Stop() error
 }
 
-func PrepareStatsBackend(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, logger Logger) (StatsBackend, error) {
+func PrepareStatsBackend(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, logger Logger) (StatsBackend, error) {
 	if strings.HasPrefix(uri, "postgresql://") || strings.HasPrefix(uri, "postgres://") {
-		backend := newBackendPostgres(uri, workers, queryTimeout, statsPrefix, logger)
+		backend := newBackendPostgres(uri, workers, queryTimeout, statsPrefix, maxEntryAge, logger)
 		if err := backend.Start(); err != nil {
 			return nil, err
 		}

@@ -24,13 +24,15 @@ type backendPostgres struct {
 	workers      int64
 	queryTimeout time.Duration
 	statsPrefix  string
+	maxEntryAge  time.Duration
 
 	logger Logger
 
 	db        *sql.DB
 	tableName string
 
-	dataChan chan storeRequest
+	dataChan      chan storeRequest
+	cleanupTicker *time.Ticker
 }
 
 //go:embed sql/init_postgres.sql
@@ -39,8 +41,13 @@ var queryInit string
 //go:embed sql/insert_stats_postgres.sql
 var queryInsert string
 
-func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, logger Logger) *backendPostgres {
+//go:embed sql/cleanup_old_entries_postgres.sql
+var queryCleanup string
+
+func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, logger Logger) *backendPostgres {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	cleanupTicker := time.NewTicker(24 * time.Hour)
 
 	return &backendPostgres{
 		ctx:       ctx,
@@ -50,10 +57,13 @@ func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, s
 		workers:      workers,
 		queryTimeout: queryTimeout,
 		statsPrefix:  statsPrefix,
+		maxEntryAge:  maxEntryAge,
 
 		tableName: statsPrefix + "_stats",
 
 		logger: logger,
+
+		cleanupTicker: cleanupTicker,
 	}
 }
 
@@ -110,6 +120,24 @@ func (b *backendPostgres) worker() {
 			return
 		case data := <-b.dataChan:
 			b.insert(data)
+		case <-b.cleanupTicker.C:
+			b.cleanup()
 		}
+
 	}
+}
+
+func (b backendPostgres) cleanup() {
+	ctx, cancel := context.WithTimeout(b.ctx, b.queryTimeout)
+	defer cancel()
+
+	query := fmt.Sprintf(queryCleanup, b.tableName, b.maxEntryAge)
+	_, err := b.db.ExecContext(ctx, query)
+	if err != nil {
+		b.logger.Error("failed to cleanup old entries from database", err)
+	}
+}
+
+func (b backendPostgres) Ready() bool {
+	return b.db.PingContext(b.ctx) == nil
 }

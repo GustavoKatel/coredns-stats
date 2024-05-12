@@ -5,9 +5,14 @@ import (
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metadata"
+	"github.com/coredns/coredns/plugin/ready"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 )
+
+var _ plugin.Handler = (*Stats)(nil)
+var _ metadata.Provider = (*Stats)(nil)
+var _ ready.Readiness = (*Stats)(nil)
 
 type Stats struct {
 	Next    plugin.Handler
@@ -49,4 +54,8 @@ func (s Stats) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 func (s Stats) Metadata(ctx context.Context, state request.Request) context.Context {
 
 	return ctx
+}
+
+func (s Stats) Ready() bool {
+	return s.Backend.Ready()
 }

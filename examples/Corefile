@@ -8,6 +8,7 @@
         workers 3
         queryTimeout 5s
         statsPrefix coredns
+        maxEntryAge 2400h # 3 months
     }
 
     forward . tls://1.1.1.1 tls://1.0.0.1 {

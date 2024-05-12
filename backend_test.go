@@ -59,7 +59,7 @@ func (s *StatsBackendSuite) TearDownSuite() {
 }
 
 func (s *StatsBackendSuite) TestPrepareStatsBackend() {
-	backend, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, "coredns", nil)
+	backend, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, "coredns", time.Hour, nil)
 	s.Require().NoError(err)
 	s.Require().NotNil(backend)
 }

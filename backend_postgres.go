@@ -31,8 +31,8 @@ type backendPostgres struct {
 	db        *sql.DB
 	tableName string
 
-	dataChan      chan storeRequest
-	cleanupTicker *time.Ticker
+	dataChan            chan storeRequest
+	maxEntryCleanTicker <-chan struct{}
 }
 
 //go:embed sql/init_postgres.sql
@@ -44,10 +44,8 @@ var queryInsert string
 //go:embed sql/cleanup_old_entries_postgres.sql
 var queryCleanup string
 
-func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, logger Logger) *backendPostgres {
+func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, maxEntryCleanTicker <-chan struct{}, logger Logger) *backendPostgres {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	cleanupTicker := time.NewTicker(24 * time.Hour)
 
 	return &backendPostgres{
 		ctx:       ctx,
@@ -63,7 +61,7 @@ func newBackendPostgres(uri string, workers int64, queryTimeout time.Duration, s
 
 		logger: logger,
 
-		cleanupTicker: cleanupTicker,
+		maxEntryCleanTicker: maxEntryCleanTicker,
 	}
 }
 
@@ -120,7 +118,7 @@ func (b *backendPostgres) worker() {
 			return
 		case data := <-b.dataChan:
 			b.insert(data)
-		case <-b.cleanupTicker.C:
+		case <-b.maxEntryCleanTicker:
 			b.cleanup()
 		}
 

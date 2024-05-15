@@ -14,7 +14,7 @@ import (
 func (s *StatsBackendSuite) TestBackendPostgres() {
 	s.Run("Start runs the init query", func() {
 		prefix := faker.Word()
-		_, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, prefix, time.Hour, s.logger)
+		_, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, prefix, time.Hour, "@every day", s.logger)
 		s.Require().NoError(err)
 
 		db, err := sql.Open("postgres", s.connString)
@@ -30,7 +30,7 @@ func (s *StatsBackendSuite) TestBackendPostgres() {
 
 	s.Run("store stats", func() {
 		prefix := faker.Word()
-		backend, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, prefix, time.Hour, s.logger)
+		backend, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, prefix, time.Hour, "@every day", s.logger)
 		s.Require().NoError(err)
 		s.Require().NotNil(backend)
 

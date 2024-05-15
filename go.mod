@@ -76,6 +76,7 @@ require (
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
 	github.com/quic-go/quic-go v0.40.1 // indirect
+	github.com/robfig/cron v1.2.0
 	github.com/testcontainers/testcontainers-go v0.31.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 	go.uber.org/mock v0.3.0 // indirect

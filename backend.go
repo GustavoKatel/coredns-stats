@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/robfig/cron"
 )
 
 type StatsBackend interface {
@@ -13,12 +15,23 @@ type StatsBackend interface {
 	Stop() error
 }
 
-func PrepareStatsBackend(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, logger Logger) (StatsBackend, error) {
+func PrepareStatsBackend(uri string, workers int64, queryTimeout time.Duration, statsPrefix string, maxEntryAge time.Duration, maxEntryCleanCron string, logger Logger) (StatsBackend, error) {
+	maxEntryCleanTicker := make(chan struct{}, 5)
+
+	c := cron.New()
+	if err := c.AddFunc(maxEntryCleanCron, func() {
+		maxEntryCleanTicker <- struct{}{}
+	}); err != nil {
+		return nil, fmt.Errorf("error adding maxEntryCleanCron: %w", err)
+	}
+
 	if strings.HasPrefix(uri, "postgresql://") || strings.HasPrefix(uri, "postgres://") {
-		backend := newBackendPostgres(uri, workers, queryTimeout, statsPrefix, maxEntryAge, logger)
+		backend := newBackendPostgres(uri, workers, queryTimeout, statsPrefix, maxEntryAge, maxEntryCleanTicker, logger)
 		if err := backend.Start(); err != nil {
 			return nil, err
 		}
+
+		c.Start()
 
 		return backend, nil
 	}

@@ -130,10 +130,23 @@ func (b backendPostgres) cleanup() {
 	defer cancel()
 
 	query := fmt.Sprintf(queryCleanup, b.tableName, b.maxEntryAge)
-	_, err := b.db.ExecContext(ctx, query)
+	rows, err := b.db.QueryContext(ctx, query)
 	if err != nil {
 		b.logger.Error("failed to cleanup old entries from database", err)
 	}
+
+	if !rows.Next() {
+		b.logger.Error("No rows returned when cleaning up old entries. Something is wrong...")
+		return
+	}
+
+	var deletedCount int64
+	if err := rows.Scan(&deletedCount); err != nil {
+		b.logger.Error("error parsing db rows", err)
+		return
+	}
+
+	oldEntriesDeletedCount.Add(float64(deletedCount))
 }
 
 func (b backendPostgres) Ready() bool {

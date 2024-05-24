@@ -1,5 +1,6 @@
+quiet: False
+disable-version-string: True
 with-expecter: True
-inpackage: True
 dir: mocks/{{ replaceAll .InterfaceDirRelative "internal" "internal_" }} 
 mockname: "{{.InterfaceName}}"
 outpkg: "mocks"

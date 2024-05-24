@@ -50,4 +50,25 @@ func (s *StatsBackendSuite) TestBackendPostgres() {
 		s.Equal("A", questionType)
 		s.Equal(stats.Metadata{"key": "value"}, metadata)
 	})
+
+	s.Run("cleanup old entries on cron", func() {
+		prefix := faker.Word()
+		backend, err := stats.PrepareStatsBackend(s.connString, 1, 1*time.Second, prefix, time.Second, "@every 2s", s.logger)
+		s.Require().NoError(err)
+		s.Require().NotNil(backend)
+
+		backend.Store("example.com", "A", stats.Metadata{"key": "value"})
+
+		<-time.After(3 * time.Second)
+
+		db, err := sql.Open("postgres", s.connString)
+		s.Require().NoError(err)
+
+		var count int64
+		err = db.QueryRow(fmt.Sprintf("SELECT count(*) FROM %s_stats", prefix)).Scan(&count)
+		s.Require().NoError(err)
+
+		s.Equal(int64(0), count)
+	})
+
 }

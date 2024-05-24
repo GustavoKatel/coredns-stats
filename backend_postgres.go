@@ -129,10 +129,14 @@ func (b backendPostgres) cleanup() {
 	ctx, cancel := context.WithTimeout(b.ctx, b.queryTimeout)
 	defer cancel()
 
-	query := fmt.Sprintf(queryCleanup, b.tableName, b.maxEntryAge)
-	rows, err := b.db.QueryContext(ctx, query)
+	query := fmt.Sprintf(queryCleanup, b.tableName)
+
+	maxAge := time.Now().UTC().Add(-b.maxEntryAge)
+
+	rows, err := b.db.QueryContext(ctx, query, maxAge)
 	if err != nil {
-		b.logger.Error("failed to cleanup old entries from database", err)
+		b.logger.Error("failed to cleanup old entries from database: ", err)
+		return
 	}
 
 	if !rows.Next() {

@@ -55,5 +55,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ghcr.io/${{ steps.vars.outputs.repo }}/coredns-blocker-${{ matrix.coredns-version }}:latest
-            ghcr.io/${{ steps.vars.outputs.repo }}/coredns-blocker-${{ matrix.coredns-version }}:${{ steps.vars.outputs.timestamp }}
+            ghcr.io/${{ steps.vars.outputs.repo }}/coredns-stats-${{ matrix.coredns-version }}:latest
+            ghcr.io/${{ steps.vars.outputs.repo }}/coredns-stats-${{ matrix.coredns-version }}:${{ steps.vars.outputs.timestamp }}
